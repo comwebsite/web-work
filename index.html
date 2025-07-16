@@ -1,569 +1,466 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WebWork</title>
-  <!-- Корректное подключение Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" 
-        integrity="sha512-rM6hiWg2Qzcc0h2fDG/w4HUl+4+p7RIi0T74txLMzSvgQCBmZGHkIIMAIyCpXIGaDZV0G4aBtc6RdzsvzfwZAw==" 
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zentry</title>
   <style>
-    /* Общие стили */
-    * {
-      box-sizing: border-box;
+    :root {
+      --bg: #ffffff;
+      --fg: #000000;
+      --accent: #28a745;
+      --accent-hover: #218838;
+      --radius: 8px;
+      --gap: 1.5rem;
     }
+
+    /* Reset & Base */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      color: #333;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Segoe UI", Tahoma, sans-serif;
       line-height: 1.6;
-      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--gap);
     }
-    header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 2.5rem;
-    }
-    main {
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-    section {
-      background: #fff;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h2,
-    h3 {
-      text-align: center;
-    }
-    
-    /* Стили для карты погоды */
-    .map-container {
+    h1, h2 { font-weight: 400; }
+    h1 { font-size: 2.5rem; margin-bottom: var(--gap); }
+    h2 { font-size: 1.5rem; margin-bottom: 0.75rem; }
+
+    /* Layout */
+    .container {
       width: 100%;
-      height: 500px;
+      max-width: 1024px;
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-gap: var(--gap);
+    }
+    @media (min-width: 768px) {
+      .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+    }
+
+    section {
+      background: var(--bg);
+      border: 1px solid var(--fg);
+      border-radius: var(--radius);
+      padding: var(--gap);
+      animation: fadeIn 0.6s ease-out;
+      transition: transform 0.3s;
+    }
+    section:hover { transform: translateY(-4px); }
+
+    label, select, input, button, textarea {
+      display: block;
+      width: 100%;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+    input, select, textarea {
+      padding: 0.6rem;
+      border: 1px solid var(--fg);
+      border-radius: var(--radius);
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    button {
+      padding: 0.75rem 1.2rem;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--radius);
+      background: var(--fg);
+      color: var(--bg);
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+      font-size: 1rem;
+    }
+    button:hover { background: #222; }
+    button:active { transform: translateY(2px); }
+
+    /* Accent send button */
+    #submit-btn {
+      background: var(--accent);
+    }
+    #submit-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    /* Map */
+    #windy-map {
+      width: 100%;
+      height: 360px;
+      border-radius: var(--radius);
       overflow: hidden;
     }
-    .map-container iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
-    
-    /* Стили для кликера */
-    #clickerSection {
+    #windy-map iframe { width: 100%; height: 100%; border: 0; }
+
+    /* Pomodoro */
+    #timer-display {
+      font-size: 2.2rem;
       text-align: center;
+      margin-top: 1rem;
     }
-    #clickerButton {
-      background-color: #007BFF;
-      border: none;
-      border-radius: 50px;
-      color: #fff;
-      padding: 10px 20px;
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    #clickerButton:hover {
-      background-color: #0056b3;
-    }
-    
-    /* Стили для формы */
-    form {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .form-group {
-      margin-bottom: 15px;
-      display: flex;
-      flex-direction: column;
-    }
-    .form-group label {
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    .form-group input,
-    .form-group select {
-      padding: 8px;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    /* Кнопки формы находящиеся в одном ряду с отступом */
-    .form-buttons {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    .form-buttons button {
-      padding: 10px 20px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background-color: #28a745;
-      color: #fff;
-    }
-    /* Кнопка "Снять задачу" – красная */
-    #clearTask {
-      background-color: #dc3545;
-      color: #fff;
-    }
-    .status-message {
-      margin-top: 15px;
-      text-align: center;
-      font-size: 1.2rem;
-      color: #28a745;
-    }
-    
-    /* Стили для мини игр */
-    .games-container {
-      display: flex;
-      justify-content: space-around;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-    .tic-tac-toe-container,
-    .calculator-container {
-      background: #f9f9f9;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-      width: 300px;
-      margin: auto;
-      text-align: center;
-    }
-    /* Стили для крестиков-ноликов */
-    .tic-tac-toe {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 5px;
-      margin-bottom: 10px;
-    }
-    .tic-tac-toe .cell {
-      background-color: #e9e9e9;
-      height: 80px;
-      font-size: 2em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border: 2px solid #fff;
-      user-select: none;
-    }
-    #ticReset {
-      background-color: #ffc107;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    #ticReset:hover {
-      background-color: #e0a800;
-    }
-    .tic-status {
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    
-    /* Стили для мини калькулятора */
+
+    /* Calculator */
     .calculator {
-      width: 100%;
+      margin: auto;
+      max-width: 280px;
     }
-    .calculator input#calcDisplay {
+    #calc-display {
       width: 100%;
-      font-size: 1.5rem;
-      padding: 10px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      font-size: 1.4rem;
+      padding: 0.5rem;
       text-align: right;
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
     }
     .calc-buttons {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 5px;
+      gap: 0.5rem;
     }
-    .calc-btn {
-      padding: 15px;
-      font-size: 1.2rem;
-      background-color: #007BFF;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.3s ease;
+    .calc-buttons button {
+      padding: 0.8rem;
+      font-size: 1rem;
+      background: var(--fg);
+      color: var(--bg);
     }
-    .calc-btn:hover {
-      background-color: #0056b3;
+    .calc-buttons button:hover { background: #222; }
+
+    /* To-Do */
+    #todo-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
     }
-    
-    /* Адаптация для мобильных устройств */
-    @media(max-width: 600px) {
-      header h1 {
-        font-size: 2rem;
-      }
-      #clickerButton {
-        font-size: 1rem;
-        padding: 8px 16px;
-      }
-      .form-buttons {
-        flex-direction: column;
-      }
-      .form-buttons button {
-        width: 100%;
-      }
-      .games-container {
-        flex-direction: column;
-        align-items: center;
-      }
-      .tic-tac-toe-container,
-      .calculator-container {
-        width: 90%;
-      }
+    #todo-filters { margin-top: 0.5rem; }
+    #todo-filters button {
+      margin-right: 0.5rem;
+      background: var(--fg);
+      color: var(--bg);
+      font-size: 0.9rem;
+    }
+    #todo-list {
+      list-style: none;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    #todo-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #ddd;
+    }
+    #todo-list li.completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: var(--gap);
+      padding: 1rem 0;
+      text-align: center;
+      font-size: 0.9rem;
+      width: 100%;
+      border-top: 1px solid #ddd;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1><i class="fas fa-globe"></i> WebWork</h1>
-  </header>
-  <main>
-    <!-- Секция с картой погоды -->
-    <section id="mapSection">
-      <h2><i class="fas fa-cloud-sun"></i> Интерактивная карта погоды</h2>
-      <div class="map-container">
-        <iframe src="https://embed.windy.com/embed2.html?lat=50.0&lon=14.0&zoom=5&level=surface&overlay=wind&menu=&message=true&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=50.0&detailLon=14.0&metricWind=default&metricTemp=default&radarRange=" allowfullscreen></iframe>
+  <h1>Zentry</h1>
+  <div class="container">
+    <!-- 1. Интерактивная карта -->
+    <section id="windy-section">
+      <h2>Интерактивная карта</h2>
+      <div id="windy-map">
+        <iframe
+          src="https://embed.windy.com/embed2.html?lat=55.7512&lon=37.6184&zoom=5&level=surface&overlay=wind"
+          allowfullscreen>
+        </iframe>
       </div>
     </section>
-    
-    <!-- Секция с кликером -->
-    <section id="clickerSection">
-      <h2><i class="fas fa-hand-pointer"></i> Мини кликер</h2>
-      <button id="clickerButton">
-        <i class="fas fa-hand-pointer"></i> Нажми меня: <span id="clickCount">0</span>
-      </button>
+
+    <!-- 2. Базовые поля -->
+    <section class="two-col">
+      <div>
+        <h2>Выполняет работу</h2>
+        <label>
+          Ваше имя
+          <input type="text" id="name" placeholder="Введите имя">
+        </label>
+      </div>
+      <div>
+        <h2>Устройство</h2>
+        <label>
+          Выберите устройство
+          <select id="device">
+            <option>Смартфон</option>
+            <option>Планшет</option>
+            <option>Компьютер</option>
+          </select>
+        </label>
+      </div>
     </section>
-    
-    <!-- Секция с мини играми -->
-    <section id="gamesSection">
-      <h2><i class="fas fa-gamepad"></i> Мини игры</h2>
-      <div class="games-container">
-        <!-- Игра крестики-нолики -->
-        <div class="tic-tac-toe-container">
-          <h3><i class="fas fa-gamepad"></i> Крестики-нолики</h3>
-          <div id="ticTacToe" class="tic-tac-toe">
-            <div class="cell" data-index="0"></div>
-            <div class="cell" data-index="1"></div>
-            <div class="cell" data-index="2"></div>
-            <div class="cell" data-index="3"></div>
-            <div class="cell" data-index="4"></div>
-            <div class="cell" data-index="5"></div>
-            <div class="cell" data-index="6"></div>
-            <div class="cell" data-index="7"></div>
-            <div class="cell" data-index="8"></div>
-          </div>
-          <button id="ticReset"><i class="fas fa-redo"></i> Начать заново</button>
-          <div id="ticStatus" class="tic-status"></div>
-        </div>
-    
-        <!-- Мини калькулятор -->
-        <div class="calculator-container">
-          <h3><i class="fas fa-calculator"></i> Мини калькулятор</h3>
-          <div id="miniCalculator" class="calculator">
-            <input type="text" id="calcDisplay" readonly />
-            <div class="calc-buttons">
-              <button class="calc-btn" data-value="7">7</button>
-              <button class="calc-btn" data-value="8">8</button>
-              <button class="calc-btn" data-value="9">9</button>
-              <button class="calc-btn" data-value="/">&divide;</button>
-              
-              <button class="calc-btn" data-value="4">4</button>
-              <button class="calc-btn" data-value="5">5</button>
-              <button class="calc-btn" data-value="6">6</button>
-              <button class="calc-btn" data-value="*">&times;</button>
-              
-              <button class="calc-btn" data-value="1">1</button>
-              <button class="calc-btn" data-value="2">2</button>
-              <button class="calc-btn" data-value="3">3</button>
-              <button class="calc-btn" data-value="-">&minus;</button>
-              
-              <button class="calc-btn" data-value="0">0</button>
-              <button class="calc-btn" data-value="C"><i class="fas fa-eraser"></i></button>
-              <button class="calc-btn" data-value="=">=</button>
-              <button class="calc-btn" data-value="+">+</button>
-            </div>
-          </div>
+
+    <!-- 3. Pomodoro Timer -->
+    <section>
+      <h2>Timer Pomodoro</h2>
+      <div class="two-col">
+        <label>
+          Длительность
+          <select id="pomodoro-duration">
+            <option value="300">5 мин</option>
+            <option value="600">10 мин</option>
+            <option value="900">15 мин</option>
+            <option value="1200">20 мин</option>
+            <option value="1500">25 мин</option>
+            <option value="1800">30 мин</option>
+          </select>
+        </label>
+        <button id="start-timer">Старт</button>
+      </div>
+      <div id="timer-display">00:00</div>
+    </section>
+
+    <!-- 4. Калькулятор -->
+    <section>
+      <h2>Калькулятор</h2>
+      <div class="calculator">
+        <input type="text" id="calc-display" disabled>
+        <div class="calc-buttons">
+          <button data-val="7">7</button>
+          <button data-val="8">8</button>
+          <button data-val="9">9</button>
+          <button data-op="/">÷</button>
+          <button data-val="4">4</button>
+          <button data-val="5">5</button>
+          <button data-val="6">6</button>
+          <button data-op="*">×</button>
+          <button data-val="1">1</button>
+          <button data-val="2">2</button>
+          <button data-val="3">3</button>
+          <button data-op="-">−</button>
+          <button data-val="0">0</button>
+          <button id="clear">C</button>
+          <button id="equals">=</button>
+          <button data-op="+">+</button>
         </div>
       </div>
     </section>
-    
-    <!-- Секция с формой (бланк) -->
-    <section id="formSection">
-      <h2><i class="fas fa-info-circle"></i> Информация</h2>
-      <form id="myForm" action="https://formsubmit.co/communityofdevelopingcraftsmen@gmail.com" method="POST">
-        <!-- Скрытые поля для FormSubmit -->
-        <input type="hidden" name="_subject" value="Новая заявка с WebWork" />
-        <input type="hidden" name="_captcha" value="false" />
-    
-        <div class="form-group">
-          <label for="userName"><i class="fas fa-user"></i> Ваше имя:</label>
-          <input type="text" id="userName" name="userName" placeholder="Введите имя" />
+
+    <!-- 5. To-Do список -->
+    <section>
+      <h2>Задачи</h2>
+      <div id="todo-actions">
+        <input type="text" id="todo-input" placeholder="Новая задача">
+        <input type="date" id="todo-deadline">
+        <button id="add-todo">Добавить</button>
+      </div>
+      <div id="todo-filters">
+        <button data-filter="all">Все</button>
+        <button data-filter="today">Сегодня</button>
+        <button data-filter="in-progress">В процессе</button>
+        <button data-filter="completed">Завершено</button>
+      </div>
+      <ul id="todo-list"></ul>
+    </section>
+
+    <!-- 6. Бланк наблюдений -->
+    <section>
+      <h2>Бланк наблюдений</h2>
+      <form id="obs-form"
+            action="https://formsubmit.co/ajax/communityofdevelopingcraftsmen@gmail.com"
+            method="POST">
+        <input type="hidden" name="_captcha" value="false">
+        <div class="two-col">
+          <label>
+            Время
+            <input type="time" name="time" required>
+          </label>
+          <label>
+            Микрорайон
+            <input type="text" name="micro" required>
+          </label>
         </div>
-        <div class="form-group">
-          <label for="microdistrict"><i class="fas fa-map-marker-alt"></i> Микрарайон:</label>
-          <input type="text" id="microdistrict" name="microdistrict" placeholder="Введите микрорайон" />
+        <div class="two-col">
+          <label>
+            Температура
+            <input type="number" name="temp" required>
+          </label>
+          <label>
+            Влажность
+            <input type="number" name="humidity" required>
+          </label>
         </div>
-        <div class="form-group">
-          <label for="task"><i class="fas fa-tasks"></i> Поставить задачу:</label>
-          <input type="text" id="task" name="task" placeholder="Введите задачу" />
+        <div class="two-col">
+          <label>
+            Погода
+            <select name="weather" required>
+              <option>Ясно</option>
+              <option>Засуха</option>
+              <option>Туман</option>
+              <option>Облачно</option>
+              <option>Пасмурно</option>
+              <option>Дождь</option>
+              <option>Гроза</option>
+              <option>Град</option>
+              <option>Снег</option>
+            </select>
+          </label>
+          <label>
+            Ветер
+            <select name="wind" required>
+              <option>Нейтральный</option>
+              <option>Слабый</option>
+              <option>Лёгкий</option>
+              <option>Умеренный</option>
+              <option>Свежий ветер</option>
+              <option>Сильный</option>
+              <option>Шторм</option>
+              <option>Ураган</option>
+            </select>
+          </label>
         </div>
-        <div class="form-group">
-          <label for="temperature"><i class="fas fa-thermometer-half"></i> Температура:</label>
-          <input type="number" id="temperature" name="temperature" placeholder="°C" />
-        </div>
-        <div class="form-group">
-          <label for="weather"><i class="fas fa-cloud"></i> Погода:</label>
-          <select id="weather" name="weather">
-            <option value="Ясно">Ясно</option>
-            <option value="Засуха">Засуха</option>
-            <option value="Туман">Туман</option>
-            <option value="Облачно">Облачно</option>
-            <option value="Пасмурно">Пасмурно</option>
-            <option value="Дождь">Дождь</option>
-            <option value="Гроза">Гроза</option>
-            <option value="Град">Град</option>
-            <option value="Снег">Снег</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="windLevel"><i class="fas fa-wind"></i> Уровень ветра:</label>
-          <select id="windLevel" name="windLevel">
-            <option value="Нейтральный">Нейтральный</option>
-            <option value="Слабый">Слабый</option>
-            <option value="Лёгкий">Лёгкий</option>
-            <option value="Умеренный">Умеренный</option>
-            <option value="Свежий ветер">Свежий ветер</option>
-            <option value="Сильный">Сильный</option>
-            <option value="Шторм">Шторм</option>
-            <option value="Ураган">Ураган</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="kt"><i class="fas fa-wind"></i> Kt:</label>
-          <input type="number" id="kt" name="kt" placeholder="Введите значение" />
-        </div>
-        <div class="form-group">
-          <label for="humidity"><i class="fas fa-tint"></i> Влажность:</label>
-          <input type="text" id="humidity" name="humidity" placeholder="10 %" pattern="^\d+\s*%$" title="Введите число и знак % (например, 10 %)" />
-        </div>
-        <div class="form-buttons">
-          <button type="button" id="clearTask"><i class="fas fa-trash-alt"></i> Снять задачу</button>
-          <button type="submit" id="submitButton"><i class="fas fa-paper-plane"></i> Отправить</button>
-        </div>
+        <label>
+          Kt
+          <input type="number" name="kt" required>
+        </label>
+        <label>
+          Комментарий
+          <textarea name="comment" rows="3"></textarea>
+        </label>
+        <button type="submit" id="submit-btn">Отправить</button>
+        <div id="submit-message"></div>
       </form>
-      <div id="statusMessage" class="status-message"></div>
     </section>
-  </main>
-  
+  </div>
+
+  <footer>© 2025 Zentry</footer>
+
   <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      // === Работа кликера ===
-      let clickCount = parseInt(localStorage.getItem("clickCount")) || 0;
-      const clickCountElem = document.getElementById("clickCount");
-      clickCountElem.textContent = clickCount;
-      const clickerButton = document.getElementById("clickerButton");
-      clickerButton.addEventListener("click", function() {
-        clickCount++;
-        clickCountElem.textContent = clickCount;
-        localStorage.setItem("clickCount", clickCount);
-      });
-      
-      // === Работа с формой и сохранение данных ===
-      const fields = ["userName", "microdistrict", "task", "temperature", "weather", "windLevel", "kt", "humidity"];
-      fields.forEach(function(fieldId) {
-        const fieldElem = document.getElementById(fieldId);
-        if (localStorage.getItem(fieldId)) {
-          fieldElem.value = localStorage.getItem(fieldId);
+    // Pomodoro Timer
+    (function() {
+      const display = document.getElementById('timer-display');
+      const startBtn = document.getElementById('start-timer');
+      const select = document.getElementById('pomodoro-duration');
+      let interval;
+      startBtn.addEventListener('click', () => {
+        clearInterval(interval);
+        let secs = +select.value;
+        const end = Date.now() + secs * 1000;
+        function update() {
+          let remain = Math.max(0, Math.floor((end - Date.now())/1000));
+          const m = String(Math.floor(remain/60)).padStart(2,'0');
+          const s = String(remain%60).padStart(2,'0');
+          display.textContent = remain>0 ? `${m}:${s}` : 'Время вышло, отдыхайте.';
+          if(remain<=0) clearInterval(interval);
         }
-        fieldElem.addEventListener("input", function() {
-          localStorage.setItem(fieldId, fieldElem.value);
+        update();
+        interval = setInterval(update, 500);
+      });
+    })();
+
+    // Calculator
+    (function(){
+      const disp = document.getElementById('calc-display');
+      let expr = '';
+      document.querySelectorAll('.calc-buttons button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const v = btn.dataset.val, op = btn.dataset.op;
+          if (v!=null) expr += v;
+          if (op) expr += op;
+          disp.value = expr;
         });
       });
-      
-      // Кнопка "Снять задачу" – очищает поле "Поставить задачу"
-      document.getElementById("clearTask").addEventListener("click", function() {
-        const taskField = document.getElementById("task");
-        taskField.value = "";
-        localStorage.setItem("task", "");
+      document.getElementById('clear').onclick = () => { expr=''; disp.value=''; };
+      document.getElementById('equals').onclick = () => {
+        try { expr = String(eval(expr)); disp.value = expr; }
+        catch { disp.value='Ошибка'; expr=''; }
+      };
+    })();
+
+    // To-Do List
+    (function(){
+      const input = document.getElementById('todo-input');
+      const dateIn = document.getElementById('todo-deadline');
+      const addBtn = document.getElementById('add-todo');
+      const listEl = document.getElementById('todo-list');
+      const filters = document.querySelectorAll('#todo-filters button');
+      let todos = [], filter = 'all';
+      addBtn.onclick = () => {
+        const text = input.value.trim(), deadline = dateIn.value;
+        if(!text||!deadline) return;
+        todos.push({ id:Date.now(), text, deadline, done:false });
+        input.value=''; dateIn.value='';
+        render();
+      };
+      filters.forEach(f => {
+        f.onclick = () => { filter = f.dataset.filter; render(); };
       });
-      
-      // Отправка формы через AJAX (fetch)
-      document.getElementById("myForm").addEventListener("submit", function(e) {
+      function render(){
+        listEl.innerHTML = '';
+        const today = new Date().toISOString().slice(0,10);
+        todos.filter(t => {
+          if(filter==='today') return t.deadline===today&&!t.done;
+          if(filter==='in-progress') return !t.done && t.deadline>today;
+          if(filter==='completed') return t.done;
+          return true;
+        }).forEach(t => {
+          const li = document.createElement('li');
+          if(t.done) li.classList.add('completed');
+          const chk = document.createElement('input');
+          chk.type='checkbox'; chk.checked=t.done;
+          chk.onchange = () => { t.done = chk.checked; render(); };
+          const txt = document.createElement('span');
+          txt.textContent = `${t.text} (до ${t.deadline})`;
+          li.append(chk, txt);
+          listEl.append(li);
+        });
+      }
+    })();
+
+    // Observation Form
+    (function(){
+      const form = document.getElementById('obs-form');
+      const msg  = document.getElementById('submit-message');
+      form.addEventListener('submit', e => {
         e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
+        const data = new FormData(form);
         fetch(form.action, {
-          method: "POST",
-          body: formData,
-          headers: { 'Accept': 'application/json' }
+          method:'POST',
+          body:data,
+          headers:{ 'Accept':'application/json'}
         })
-        .then(function(response) {
-          if (response.ok) {
+        .then(res => {
+          if(res.ok){
             form.reset();
-            fields.forEach(function(fieldId) {
-              localStorage.removeItem(fieldId);
-            });
-            const statusMessage = document.getElementById("statusMessage");
-            statusMessage.innerHTML = 'Отправлено <i class="fas fa-smile"></i>';
-            setTimeout(function() {
-              statusMessage.textContent = "";
-            }, 3000);
+            msg.textContent = 'Отправлено 😊';
           } else {
-            return response.json().then(function(data) {
-              if (data.errors) {
-                alert(data.errors.map(error => error.message).join(", "));
-              } else {
-                alert("Ошибка при отправке формы");
-              }
-            });
+            msg.textContent = 'Ошибка отправки';
           }
+          setTimeout(()=> msg.textContent='', 4000);
         })
-        .catch(function(error) {
-          console.error("Ошибка при отправке:", error);
-          alert("Ошибка при отправке формы");
+        .catch(() => {
+          msg.textContent = 'Ошибка сети';
+          setTimeout(()=> msg.textContent='', 4000);
         });
       });
-      
-      // === Мини игра: Крестики-нолики против бота ===
-      const ticCells = document.querySelectorAll("#ticTacToe .cell");
-      let ticBoard = ["", "", "", "", "", "", "", "", ""];
-      let gameActive = true; // Игра активна, пока нет победителя или ничьи
-      const ticStatus = document.getElementById("ticStatus");
-      
-      function checkTicWin() {
-        const winConditions = [
-          [0, 1, 2], [3, 4, 5], [6, 7, 8],
-          [0, 3, 6], [1, 4, 7], [2, 5, 8],
-          [0, 4, 8], [2, 4, 6]
-        ];
-        for (const condition of winConditions) {
-          const [a, b, c] = condition;
-          if (ticBoard[a] && ticBoard[a] === ticBoard[b] && ticBoard[b] === ticBoard[c]) {
-            return ticBoard[a];
-          }
-        }
-        return null;
-      }
-      
-      function checkTicDraw() {
-        return ticBoard.every(cell => cell !== "");
-      }
-      
-      function updateTicStatus(message) {
-        ticStatus.textContent = message;
-      }
-      
-      // Ход бота: выбирается случайная свободная ячейка для "O"
-      function botMove() {
-        if (!gameActive) return;
-        let availableIndices = [];
-        for (let i = 0; i < ticBoard.length; i++) {
-          if (ticBoard[i] === "") {
-            availableIndices.push(i);
-          }
-        }
-        if (availableIndices.length === 0) return;
-        const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-        ticBoard[randomIndex] = "O";
-        document.querySelector(`.tic-tac-toe .cell[data-index="${randomIndex}"]`).textContent = "O";
-        const winner = checkTicWin();
-        if (winner) {
-          updateTicStatus(`Выиграл ${winner}!`);
-          gameActive = false;
-          return;
-        }
-        if (checkTicDraw()) {
-          updateTicStatus("Ничья!");
-          gameActive = false;
-          return;
-        }
-        updateTicStatus("Ваш ход (X)");
-      }
-      
-      ticCells.forEach(cell => {
-        cell.addEventListener("click", function() {
-          const index = cell.getAttribute("data-index");
-          if (ticBoard[index] !== "" || !gameActive) return;
-          // Ваш ход – ставим "X"
-          ticBoard[index] = "X";
-          cell.textContent = "X";
-          const winner = checkTicWin();
-          if (winner) {
-            updateTicStatus(`Выиграл ${winner}!`);
-            gameActive = false;
-            return;
-          }
-          if (checkTicDraw()) {
-            updateTicStatus("Ничья!");
-            gameActive = false;
-            return;
-          }
-          updateTicStatus("Бот думает...");
-          setTimeout(botMove, 500);
-        });
-      });
-      
-      document.getElementById("ticReset").addEventListener("click", function() {
-        ticBoard = ["", "", "", "", "", "", "", "", ""];
-        gameActive = true;
-        ticCells.forEach(cell => cell.textContent = "");
-        updateTicStatus("Ваш ход (X)");
-      });
-      
-      updateTicStatus("Ваш ход (X)");
-      
-      // === Мини калькулятор ===
-      const calcDisplay = document.getElementById("calcDisplay");
-      const calcButtons = document.querySelectorAll(".calc-btn");
-      let calcExpression = "";
-      
-      calcButtons.forEach(btn => {
-        btn.addEventListener("click", function() {
-          const value = btn.getAttribute("data-value");
-          if (value === "C") {
-            calcExpression = "";
-            calcDisplay.value = "";
-          } else if (value === "=") {
-            try {
-              let result = eval(calcExpression);
-              calcDisplay.value = result;
-              calcExpression = result.toString();
-            } catch (e) {
-              calcDisplay.value = "Error";
-              calcExpression = "";
-            }
-          } else {
-            calcExpression += value;
-            calcDisplay.value = calcExpression;
-          }
-        });
-      });
-    });
+    })();
   </script>
 </body>
 </html>
